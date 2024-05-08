@@ -2,3 +2,4 @@ multiwrapper
 cloud-volume
 retrying
 fastremap
+caveclient

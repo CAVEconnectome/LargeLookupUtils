@@ -78,7 +78,7 @@ def lookup_sv_ids(
     out_path,
     coord_sorting=None,
     scaling=None,
-    n_threads=64,
+    n_processes=64,
 ):
     """Lookups of supervoxel IDs"""
     cv = load_cv(cv_path)
@@ -94,7 +94,7 @@ def lookup_sv_ids(
     if coord_sorting is None:
         coord_sorting = sort_by_chunk(cv, all_coords)
 
-    n_jobs = min(len(coord_sorting), n_threads * 30)
+    n_jobs = min(len(coord_sorting), n_processes * 30)
 
     multi_args = []
     coord_sorting_blocks = np.array_split(coord_sorting, n_jobs)
@@ -104,7 +104,7 @@ def lookup_sv_ids(
         )
 
     time_start = time.time()
-    if n_threads == 1:
+    if n_processes == 1:
         rs = mu.multithread_func(
             _lookup_sv_ids_chunk, multi_args, n_threads=1, debug=True
         )
@@ -112,20 +112,28 @@ def lookup_sv_ids(
         rs = mu.multisubprocess_func(
             _lookup_sv_ids_chunk,
             multi_args,
-            n_threads=n_threads,
+            n_threads=n_processes,
             package_name="largelookuputils",
         )
 
     print(f"TIME {time.time() - time_start}")
 
     coord_ids = []
-    sv_ids = []
+    sv_ids_unordered = []
     for r in rs:
         coord_ids.extend(r[0])
-        sv_ids.extend(r[1])
+        sv_ids_unordered.extend(r[1])
 
-    np.save(f"{out_path}/coord_ids.npy", coord_ids)
-    np.save(f"{out_path}/sv_ids.npy", sv_ids)
+    coord_ids = np.array(coord_ids)
+    sv_ids_unordered = np.array(sv_ids_unordered)
+
+    np.save(f"{out_path}/sv_coord_ids.npy", coord_ids)
+    np.save(f"{out_path}/sv_ids_unordered.npy", sv_ids_unordered)
+
+    sv_ids_ordered = np.zeros(len(sv_ids_unordered), dtype=np.uint64)
+    sv_ids_ordered[coord_ids] = sv_ids_unordered
+
+    np.save(f"{out_path}/sv_ids_ordered.npy", sv_ids_ordered)
 
 
 if __name__ == "__main__":
@@ -178,5 +186,5 @@ if __name__ == "__main__":
         args.synapse_coord_path,
         args.out_path,
         coord_sorting=None,
-        n_threads=args.processes,
+        n_processes=args.processes,
     )
