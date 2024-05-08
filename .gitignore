@@ -1,0 +1,6 @@
+data/*
+build
+.eggs
+*.egg*
+.DS_Store
+.ipynb_checkpoints
