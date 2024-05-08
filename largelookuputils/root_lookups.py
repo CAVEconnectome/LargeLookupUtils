@@ -46,7 +46,7 @@ def lookup_root_ids(
     sv_coord_ids = np.load(f"{in_path}/sv_coord_ids.npy").flatten()
     sv_ids_unordered = np.load(f"{in_path}/sv_ids_unordered.npy").flatten()
 
-    id_blocks = np.array_split(np.arange(len(sv_ids_unordered)), n_processes * 30)
+    id_blocks = np.array_split(np.arange(len(sv_ids_unordered)), n_processes * 3)
 
     multi_args = []
     for i_num, id_block in enumerate(id_blocks):
@@ -75,6 +75,7 @@ def lookup_root_ids(
     print(f"TIME {time.time() - time_start}")
 
     root_ids_unordered = []
+    coord_ids = []
     for r in rs:
         root_ids_unordered.extend(r[0])
         coord_ids.extend(r[1])
