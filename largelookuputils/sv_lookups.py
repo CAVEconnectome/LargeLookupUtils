@@ -94,7 +94,8 @@ def lookup_sv_ids(
     if coord_sorting is None:
         coord_sorting = sort_by_chunk(cv, all_coords)
 
-    n_jobs = min(len(coord_sorting), n_processes * 30)
+    n_jobs = min(len(coord_sorting) // 1000, n_processes * 30)
+    print(f"Creating {n_jobs} jobs")
 
     multi_args = []
     coord_sorting_blocks = np.array_split(coord_sorting, n_jobs)

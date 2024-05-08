@@ -15,7 +15,7 @@ def _lookup_root_ids_thread(args):
 
     root_ids = []
     lookedup_coord_ids = []
-    id_blocks = np.array_split(np.arange(len(sv_ids)), int(len(sv_ids) / 10000) + 1)
+    id_blocks = np.array_split(np.arange(len(sv_ids)), len(sv_ids) // 10000 + 1)
     for i_num, id_block in enumerate(id_blocks):
         print(f"{i_thread}-{i_num + 1}/{len(id_blocks)}")
 
@@ -30,7 +30,7 @@ def _lookup_root_ids_thread(args):
         root_ids.extend(client.chunkedgraph.get_roots(sv_id_block, timestamp=timestamp))
         lookedup_coord_ids.extend(coord_id_block)
 
-    return root_ids, lookup_root_ids
+    return root_ids, lookedup_coord_ids
 
 
 def lookup_root_ids(
@@ -46,7 +46,13 @@ def lookup_root_ids(
     sv_coord_ids = np.load(f"{in_path}/sv_coord_ids.npy").flatten()
     sv_ids_unordered = np.load(f"{in_path}/sv_ids_unordered.npy").flatten()
 
-    id_blocks = np.array_split(np.arange(len(sv_ids_unordered)), n_processes * 3)
+    n_jobs = min(len(sv_ids_unordered) // 20000, n_processes * 30)
+    print(f"Creating {n_jobs} jobs")
+
+    id_blocks = np.array_split(
+        np.arange(len(sv_ids_unordered)),
+        n_jobs,
+    )
 
     multi_args = []
     for i_num, id_block in enumerate(id_blocks):
